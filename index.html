@@ -365,16 +365,6 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:#ecdeff;width:1
 .wb-row.r2{background:rgba(155,168,184,.05);border-color:rgba(155,168,184,.2)}
 .wb-row.r3{background:rgba(160,100,40,.06);border-color:rgba(176,120,64,.22)}
 
-/* Підвищуємо пріоритет селектора, щоб твій рядок завжди перебивав кольори 1,2,3 місць */
-#wb-list .wb-row.me {
-  background:rgba(196,77,255,.15);
-  border-color:var(--magic);
-  box-shadow:0 0 25px rgba(196,77,255,.5), inset 0 0 15px rgba(196,77,255,.15);
-  transform:scale(1.02);
-  z-index:2;
-  position:relative;
-}
-
 .wb-rank{font-family:'Bebas Neue',sans-serif;font-size:24px;text-align:center;line-height:1}
 .rk-1{color:var(--gold);text-shadow:0 0 14px rgba(255,209,102,.7)}
 .rk-2{color:#9ba8b8}
@@ -382,7 +372,6 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:#ecdeff;width:1
 .rk-n{color:rgba(255,255,255,.28);font-size:15px;font-family:'Space Mono',monospace}
 
 .wb-nick{font-family:'DM Sans',sans-serif;font-weight:800;font-size:16px;color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-#wb-list .wb-row.me .wb-nick{color:#fff;text-shadow:0 0 10px rgba(196,77,255,.6);}
 
 .you-tag{
   display:inline-block;
@@ -399,7 +388,6 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:#ecdeff;width:1
 .wb-row.r1 .wb-score{color:var(--gold);text-shadow:0 0 14px rgba(255,209,102,.6)}
 .wb-row.r2 .wb-score{color:#9ba8b8;text-shadow:none}
 .wb-row.r3 .wb-score{color:#b07840;text-shadow:none}
-#wb-list .wb-row.me .wb-score{color:var(--magic);text-shadow:0 0 16px rgba(196,77,255,.8)}
 .ws-unit{font-size:13px;color:rgba(255,255,255,.3);letter-spacing:1px;font-family:'Space Mono',monospace;margin-left:2px}
 
 .wb-skeleton{display:flex;flex-direction:column;gap:8px;width:100%;max-width:560px;padding:16px 32px}
