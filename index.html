@@ -159,8 +159,9 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:#ecdeff;width:1
   font-family:'Space Mono',monospace;font-size:16px;text-align:center;letter-spacing:3px;
   outline:none;transition:.3s;margin-bottom:14px;
   user-select:text!important;-webkit-user-select:text!important;
+  text-transform:lowercase;
 }
-.glass-input::placeholder{color:rgba(255,255,255,.2)}
+.glass-input::placeholder{color:rgba(255,255,255,.2); text-transform:none;}
 .glass-input:focus{border-color:var(--magic);box-shadow:0 0 0 3px rgba(196,77,255,.15)}
 .glass-input.err{border-color:var(--rose);animation:shake .3s ease}
 @keyframes shake{0%,100%{transform:translateX(0)}25%{transform:translateX(-8px)}75%{transform:translateX(8px)}}
@@ -466,7 +467,7 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:#ecdeff;width:1
   <div class="card">
     <h2 style="font-size:36px;letter-spacing:4px;line-height:1.15">WELCOME TO<br><span style="font-size:1.3em;letter-spacing:6px;color:var(--magic);text-shadow:0 0 30px rgba(196,77,255,.8)">TOWER BLOCK</span></h2>
     <div class="sub">CREATED BY VSDKK FOR MAGICBLOCK</div>
-    <input class="glass-input" id="nick-input" type="text" placeholder="NAME" maxlength="15" autocomplete="off">
+    <input class="glass-input" id="nick-input" type="text" placeholder="name" maxlength="15" autocomplete="off">
     <button class="btn btn-magic" id="login-btn">GO BUILD</button>
   </div>
 </div>
@@ -475,7 +476,7 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:#ecdeff;width:1
 <div id="tut">
   <div class="tut-greeting">
     <div class="tut-hi">WELCOME BACK</div>
-    <div class="tut-name" id="tut-name">PLAYER</div>
+    <div class="tut-name" id="tut-name">player</div>
   </div>
   <div class="tut-divider"></div>
   <div class="tut-title">HOW TO PLAY</div>
@@ -855,26 +856,31 @@ function startGame(){
 
 // ── AUTH ──
 function initAuth(){
-  if(currentUser){authModal.classList.remove('on');nickInput.value=currentUser;runTutorial();}
+  if(currentUser){authModal.classList.remove('on');nickInput.value=currentUser.toLowerCase();runTutorial();}
   else gameLoop();
 }
 
+// Форсуємо маленькі літери під час вводу нікнейму
+nickInput.addEventListener('input', function(e) {
+  this.value = this.value.toLowerCase();
+});
+
 document.getElementById('login-btn').addEventListener('click',()=>{
-  const nick=nickInput.value.trim();
+  const nick=nickInput.value.trim().toLowerCase();
   if(nick.length>=2){
     currentUser=nick;localStorage.setItem('tbNick',nick);
     authModal.classList.remove('on');nickInput.blur();runTutorial();
   } else {nickInput.classList.add('err');setTimeout(()=>nickInput.classList.remove('err'),600);}
 });
 nickInput.addEventListener('keydown',e=>{if(e.key==='Enter')document.getElementById('login-btn').click();});
-if(currentUser) nickInput.value=currentUser;
+if(currentUser) nickInput.value=currentUser.toLowerCase();
 
 // ── TUTORIAL with mobile/desktop detection ──
 let tutAnimInterval=null;
 
 function runTutorial(){
   state='tutorial';
-  tutName.textContent=currentUser.toUpperCase();
+  tutName.textContent=currentUser; // Відображаємо тільки з маленької
   tutEl.classList.add('on');
   if(!animId) gameLoop();
 
@@ -923,7 +929,7 @@ function safeKey(nick){
 }
 
 async function submitScore(nick, scoreVal){
-  if(!nick) nick = 'Player';
+  if(!nick) nick = 'player';
   const { ref, set, get } = rtFns;
   const key = safeKey(nick);
   const playerRef = ref(rtdb, `weezerbord/${key}`);
@@ -935,10 +941,10 @@ async function submitScore(nick, scoreVal){
       // Перевіряємо, чи існуючий запис є коректним об'єктом і чи новий рахунок більший
       const currentScore = (data && typeof data === 'object' && typeof data.score === 'number') ? data.score : -1;
       if(scoreVal > currentScore){
-        await set(playerRef, { nick, score: scoreVal, ts: Date.now() });
+        await set(playerRef, { nick: nick.toLowerCase(), score: scoreVal, ts: Date.now() });
       }
     } else {
-      await set(playerRef, { nick, score: scoreVal, ts: Date.now() });
+      await set(playerRef, { nick: nick.toLowerCase(), score: scoreVal, ts: Date.now() });
     }
   } catch(e) {
     console.warn("Submit score failed:", e);
@@ -987,7 +993,7 @@ function initLeaderboard(){
 
 // Захист від помилок TypeError: undefined.replace
 function escHtml(s){
-  if(s === undefined || s === null) return 'Unknown';
+  if(s === undefined || s === null) return 'unknown';
   return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
 }
 
@@ -1009,7 +1015,7 @@ function renderLeaderboard(rows){
     return `
     <div class="${c}" style="animation-delay:${i*.05}s">
       ${icon(i)}
-      <div class="wb-nick">${escHtml(r.nick)}${isMe?'<span class="you-tag">YOU</span>':''}</div>
+      <div class="wb-nick">${escHtml(r.nick).toLowerCase()}${isMe?'<span class="you-tag">YOU</span>':''}</div>
       <div class="wb-score">${r.score}<span class="ws-unit">m</span></div>
     </div>`;
   }).join('');
