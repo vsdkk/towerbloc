@@ -912,19 +912,31 @@ document.addEventListener('keydown',e=>{if(e.code==='Space'&&state==='playing'&&
 // ═══════════════════════════════════════════════════
 
 // Нік → безпечний ключ для Realtime DB (забороняє . # $ / [ ])
-function safeKey(nick){ return nick.replace(/[.#$\/\[\]]/g,'_'); }
+function safeKey(nick){
+  if(!nick) return 'unknown';
+  return String(nick).replace(/[.#$\/\[\]]/g,'_');
+}
 
 async function submitScore(nick, scoreVal){
+  if(!nick) nick = 'Player';
   const { ref, set, get } = rtFns;
   const key = safeKey(nick);
   const playerRef = ref(rtdb, `weezerbord/${key}`);
-  const snap = await get(playerRef);
-  if(snap.exists()){
-    if(scoreVal > snap.val().score){
+  
+  try {
+    const snap = await get(playerRef);
+    if(snap.exists()){
+      const data = snap.val();
+      // Перевіряємо, чи існуючий запис є коректним об'єктом і чи новий рахунок більший
+      const currentScore = (data && typeof data === 'object' && typeof data.score === 'number') ? data.score : -1;
+      if(scoreVal > currentScore){
+        await set(playerRef, { nick, score: scoreVal, ts: Date.now() });
+      }
+    } else {
       await set(playerRef, { nick, score: scoreVal, ts: Date.now() });
     }
-  } else {
-    await set(playerRef, { nick, score: scoreVal, ts: Date.now() });
+  } catch(e) {
+    console.warn("Submit score failed:", e);
   }
 }
 
@@ -934,33 +946,54 @@ async function getUserRank(nick, scoreVal){
   if(!snap.exists()) return 1;
   let rank = 1;
   snap.forEach(child => {
-    if(child.val().score > scoreVal) rank++;
+    const val = child.val();
+    if(val && typeof val === 'object' && val.score > scoreVal) rank++;
   });
   return rank;
 }
 
 function initLeaderboard(){
   const { ref, onValue, query, orderByChild, limitToLast } = rtFns;
-  // Realtime DB не має desc — беремо limitToLast і реверсимо
   const q = query(ref(rtdb, 'weezerbord'), orderByChild('score'), limitToLast(20));
+  
   onValue(q, snap => {
     const rows = [];
-    snap.forEach(child => rows.push(child.val()));
-    // Реверс: найбільший рахунок зверху
-    rows.reverse();
+    snap.forEach(child => {
+      const val = child.val();
+      // Захист від некоректних або порожніх записів (створених вручну)
+      if(val && typeof val === 'object' && val.score !== undefined) {
+         rows.push({
+           nick: val.nick || child.key, // якщо нік пустий, беремо назву ключа
+           score: Number(val.score) || 0
+         });
+      }
+    });
+    
+    // Сортуємо від найбільшого до найменшого надійно (захист від помилок індексації Firebase)
+    rows.sort((a, b) => b.score - a.score);
     renderLeaderboard(rows);
+    
+  }, (error) => {
+    console.error("Firebase Read Error:", error);
+    // Якщо проблема з дозволами (Rules)
+    wbList.innerHTML=`<div style="text-align:center;padding:60px 0;font-family:'Space Mono',monospace;font-size:12px;letter-spacing:4px;color:var(--rose);">ПОМИЛКА ДОСТУПУ ДО ДАНИХ<br><br><span style="font-size:9px;color:rgba(255,255,255,.5)">Перевір налаштування Rules у Firebase</span></div>`;
   });
 }
 
-function escHtml(s){ return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+// Захист від помилок TypeError: undefined.replace
+function escHtml(s){
+  if(s === undefined || s === null) return 'Unknown';
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
 
 function renderLeaderboard(rows){
-  if(rows.length===0){
+  if(!rows || rows.length === 0){
     wbList.innerHTML=`<div style="text-align:center;padding:60px 0;font-family:'Space Mono',monospace;font-size:12px;letter-spacing:4px;color:rgba(196,77,255,.3);">NO SCORES YET<br><br>BE THE FIRST!</div>`;
     return;
   }
   const icon=i=>i===0?'<span class="wb-rank rk-1">🥇</span>':i===1?'<span class="wb-rank rk-2">🥈</span>':i===2?'<span class="wb-rank rk-3">🥉</span>':`<span class="wb-rank rk-n">#${i+1}</span>`;
   const rc=(i,nick)=>{let c='wb-row';if(i===0)c+=' r1';else if(i===1)c+=' r2';else if(i===2)c+=' r3';if(nick===currentUser)c+=' me';return c;};
+  
   wbList.innerHTML=rows.map((r,i)=>`
     <div class="${rc(i,r.nick)}" style="animation-delay:${i*.05}s">
       ${icon(i)}
