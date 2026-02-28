@@ -172,6 +172,9 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:#ecdeff;width:1
 .btn-red:hover{box-shadow:0 10px 30px rgba(255,56,100,.35);transform:translateY(-2px)}
 .btn:active{transform:scale(.97)!important}
 
+.btn-outline{background:rgba(196,77,255,.07);border:1.5px solid rgba(196,77,255,.3);color:var(--magic);margin-top:12px;}
+.btn-outline:hover{background:rgba(196,77,255,.15);border-color:var(--magic);color:#fff;box-shadow:0 0 20px rgba(196,77,255,.3);transform:translateY(-2px)}
+
 /* Game Over */
 .go-num{
   font-family:'Bebas Neue',sans-serif;font-size:110px;line-height:1;
@@ -358,10 +361,19 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:#ecdeff;width:1
 }
 @keyframes rowIn{from{opacity:0;transform:translateX(-20px)}to{opacity:1;transform:none}}
 .wb-row:hover{background:rgba(196,77,255,.08);border-color:rgba(196,77,255,.2)}
-.wb-row.me{background:rgba(196,77,255,.1);border-color:rgba(196,77,255,.4);box-shadow:0 0 20px rgba(196,77,255,.1)}
 .wb-row.r1{background:rgba(255,209,102,.07);border-color:rgba(255,209,102,.35)}
 .wb-row.r2{background:rgba(155,168,184,.05);border-color:rgba(155,168,184,.2)}
 .wb-row.r3{background:rgba(160,100,40,.06);border-color:rgba(176,120,64,.22)}
+
+/* Підвищуємо пріоритет селектора, щоб твій рядок завжди перебивав кольори 1,2,3 місць */
+#wb-list .wb-row.me {
+  background:rgba(196,77,255,.15);
+  border-color:var(--magic);
+  box-shadow:0 0 25px rgba(196,77,255,.5), inset 0 0 15px rgba(196,77,255,.15);
+  transform:scale(1.02);
+  z-index:2;
+  position:relative;
+}
 
 .wb-rank{font-family:'Bebas Neue',sans-serif;font-size:24px;text-align:center;line-height:1}
 .rk-1{color:var(--gold);text-shadow:0 0 14px rgba(255,209,102,.7)}
@@ -370,21 +382,24 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:#ecdeff;width:1
 .rk-n{color:rgba(255,255,255,.28);font-size:15px;font-family:'Space Mono',monospace}
 
 .wb-nick{font-family:'DM Sans',sans-serif;font-weight:800;font-size:16px;color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.wb-row.me .wb-nick{color:#fff}
+#wb-list .wb-row.me .wb-nick{color:#fff;text-shadow:0 0 10px rgba(196,77,255,.6);}
+
 .you-tag{
-  font-family:'Space Mono',monospace;font-size:9px;letter-spacing:2px;
-  color:#fff;background:var(--magic);
-  padding:3px 8px;border-radius:4px;margin-left:8px;vertical-align:middle;
-  box-shadow:0 0 10px rgba(196,77,255,.7);
-  font-weight:700;
+  display:inline-block;
+  font-family:'Space Mono',monospace;font-size:10px;letter-spacing:2px;
+  color:#fff;background:linear-gradient(135deg, var(--magic), var(--magic2));
+  padding:2px 6px;border-radius:6px;margin-left:10px;vertical-align:middle;
+  box-shadow:0 0 12px rgba(196,77,255,.8);
+  font-weight:700;text-shadow:0 0 4px rgba(0,0,0,.3);
+  position:relative; top:-1px;
 }
 
 /* ── RECORD SCORE COLOR ── */
 .wb-score{font-family:'Bebas Neue',sans-serif;font-size:28px;letter-spacing:2px;color:var(--record);text-align:right;text-shadow:0 0 12px rgba(196,77,255,.4)}
-.wb-row.me .wb-score{color:var(--magic);text-shadow:0 0 16px rgba(196,77,255,.6)}
 .wb-row.r1 .wb-score{color:var(--gold);text-shadow:0 0 14px rgba(255,209,102,.6)}
 .wb-row.r2 .wb-score{color:#9ba8b8;text-shadow:none}
 .wb-row.r3 .wb-score{color:#b07840;text-shadow:none}
+#wb-list .wb-row.me .wb-score{color:var(--magic);text-shadow:0 0 16px rgba(196,77,255,.8)}
 .ws-unit{font-size:13px;color:rgba(255,255,255,.3);letter-spacing:1px;font-family:'Space Mono',monospace;margin-left:2px}
 
 .wb-skeleton{display:flex;flex-direction:column;gap:8px;width:100%;max-width:560px;padding:16px 32px}
@@ -501,7 +516,7 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:#ecdeff;width:1
   <!-- Mobile tap -->
   <div class="tut-keys" id="tut-mobile" style="display:none">
     <div class="tut-key">
-      <div class="tut-kc tap-btn" id="key-tap">👆</div>
+      <div class="tut-kc tap-btn" id="key-tap"></div>
       <div class="tut-l">TAP</div>
     </div>
   </div>
@@ -522,6 +537,7 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:#ecdeff;width:1
     <div class="go-rank" id="final-rank" style="display:none"></div>
     <div class="go-pb" id="final-pb"></div>
     <button class="btn btn-magic" id="restart-btn">RETRY</button>
+    <button class="btn btn-outline" id="go-wb-btn">WEEZERBORD</button>
   </div>
 </div>
 
@@ -658,6 +674,7 @@ const pbVal=document.getElementById('pb-val');
 const recFlash=document.getElementById('new-record-flash');
 const recMsg=document.getElementById('new-record-msg');
 const wbBtn=document.getElementById('wb-btn');
+const goWbBtn=document.getElementById('go-wb-btn');
 const wbOverlay=document.getElementById('wb-overlay');
 const wbClose=document.getElementById('wb-close');
 const wbList=document.getElementById('wb-list');
@@ -898,7 +915,7 @@ function runTutorial(){
     keyMouse && keyMouse.classList.remove('pressing');
     tutEl.classList.remove('on');
     setTimeout(startGame,600);
-  },4000);
+  },3000);
 }
 
 document.getElementById('restart-btn').addEventListener('click',startGame);
@@ -992,18 +1009,27 @@ function renderLeaderboard(rows){
     return;
   }
   const icon=i=>i===0?'<span class="wb-rank rk-1">🥇</span>':i===1?'<span class="wb-rank rk-2">🥈</span>':i===2?'<span class="wb-rank rk-3">🥉</span>':`<span class="wb-rank rk-n">#${i+1}</span>`;
-  const rc=(i,nick)=>{let c='wb-row';if(i===0)c+=' r1';else if(i===1)c+=' r2';else if(i===2)c+=' r3';if(nick===currentUser)c+=' me';return c;};
   
-  wbList.innerHTML=rows.map((r,i)=>`
-    <div class="${rc(i,r.nick)}" style="animation-delay:${i*.05}s">
+  wbList.innerHTML=rows.map((r,i)=>{
+    // Робимо безпечну перевірку без врахування регістру
+    const isMe = r.nick && currentUser && String(r.nick).toLowerCase() === String(currentUser).toLowerCase();
+    
+    let c='wb-row';
+    if(i===0) c+=' r1'; else if(i===1) c+=' r2'; else if(i===2) c+=' r3';
+    if(isMe) c+=' me'; // Клас me додасть фіолетове світіння твому рядку
+    
+    return `
+    <div class="${c}" style="animation-delay:${i*.05}s">
       ${icon(i)}
-      <div class="wb-nick">${escHtml(r.nick)}${r.nick===currentUser?'<span class="you-tag">YOU</span>':''}</div>
+      <div class="wb-nick">${escHtml(r.nick)}${isMe?'<span class="you-tag">YOU</span>':''}</div>
       <div class="wb-score">${r.score}<span class="ws-unit">m</span></div>
-    </div>`).join('');
+    </div>`;
+  }).join('');
 }
 
 // Weezerbord open/close
 wbBtn.addEventListener('click',()=>wbOverlay.classList.add('on'));
+goWbBtn.addEventListener('click',()=>wbOverlay.classList.add('on'));
 wbClose.addEventListener('click',()=>wbOverlay.classList.remove('on'));
 wbOverlay.addEventListener('click',e=>{if(e.target===wbOverlay)wbOverlay.classList.remove('on');});
 
